@@ -163,6 +163,9 @@
 
 	<target name="resolve">
 		<ivy:retrieve />
+		<!-- If you have adde dependencies to thrid-party libraries, you need to
+		     copy these libraries here to your lib folder. Simply uncomment the
+		     next 5 lines and replace xxx with the name of the third-party library. -->
 		<!--copy todir="lib" overwrite="true">
 			<fileset dir="ivy">
 				<include name="xxx.jar" />
