@@ -12,9 +12,9 @@
        <!-- Uncomment the next line if you are working with Petri nets. -->
        <!--dependency org="prom" name="PetriNets" rev="latest" changing="true" transitive="true" /-->
        <!-- Uncomment the next line if you need to use often-used libraires contained in the BasicUtils package. -->
-       <!--dependency org="prom" name="BasicUtils" rev="latest" changing="true" transitive="true" /-->
+       <dependency org="prom" name="BasicUtils" rev="latest" changing="true" transitive="true" />
        <!-- Uncomment the next line if you need to use often-used GUI widgets. -->
-       <!--dependency org="prom" name="Widgets" rev="latest" changing="true" transitive="true" /-->
+       <dependency org="prom" name="Widgets" rev="latest" changing="true" transitive="true" />
        <!-- If you need to add a dependency on a third-party library, make
             sure you copy the library to the lib folder at the end of the build.xml file. 
             Before you include such a dependency, please first check the following web page:
