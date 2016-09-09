@@ -5,6 +5,8 @@
     	</description>
     </info>
     <dependencies>
+       <!-- Please use a single line for a dependency. If you use multiple liens
+            for a single dependency, in the back, things will go wrong. So please do not. -->
        <!-- The following dependecny is required for the framework. Do not remove! -->
        <dependency org="prom" name="ProM-Plugins" rev="latest" changing="true" transitive="true" />
        <!-- Uncomment the next line if you are working with logs. -->
