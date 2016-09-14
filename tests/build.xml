@@ -36,12 +36,12 @@
 	
 	<!-- classes of ProM framework in which the plugin shall be executed -->
 	<path id="classpath.prom">
-      	<fileset dir="${home}/packagelib/">
+      	<!--fileset dir="${home}/packagelib/">
         	<include name="**/*.jar"/>
       	</fileset>
       	<fileset dir="${home}/stdlib/">
         	<include name="**/*.jar"/>
-      	</fileset>
+      	</fileset-->
 	</path>
 	
 	<!-- include compiled classes, libraries, and test-case files -->
@@ -52,6 +52,9 @@
         	<include name="**/*.jar"/>
       	</fileset>
       	-->
+      	<fileset dir="${home}/ivy/">
+        	<include name="**/*.jar"/>
+      	</fileset>
       	<fileset dir="${home}/lib/">
         	<include name="**/*.jar"/>
       	</fileset>
@@ -107,9 +110,9 @@
 	    <junit fork="true" dir="${home}" includeantruntime="yes" >
 	    	<!-- parameters to run ProM -->
 	    	<jvmarg value="-ea"/>
-	    	<jvmarg value="-Xmx2G"/>
-	    	<jvmarg value="-XX:MaxPermSize=512M"/>
-	    	<jvmarg value="-Djava.library.path=.//lib;.//stdlib;.//packagelib"/>
+	    	<jvmarg value="-Xmx1G"/>
+	    	<jvmarg value="-XX:MaxPermSize=256m"/>
+	    	<jvmarg value="-Djava.library.path=.//lib"/>
 	    	<!-- fixed location for cobertura to log method calls and generate report from -->
 	    	<jvmarg value="-Dnet.sourceforge.cobertura.datafile=${cobertura.datafile}"/>
 	    	
