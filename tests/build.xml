@@ -70,11 +70,10 @@
 	
 	<!-- definitions for cobertura, to generate code coverage reports -->
 	<path id="classpath.cobertura">
-		<pathelement location="${test.basedir}/libs-external/cobertura.jar" />
-		<pathelement location="${test.basedir}/libs-external/lib-cobertura/log4j-1.2.9.jar" />
-		<pathelement location="${test.basedir}/libs-external/lib-cobertura/asm-3.0.jar" />
-		<pathelement location="${test.basedir}/libs-external/lib-cobertura/asm-tree-3.0.jar" />
-		<pathelement location="${test.basedir}/libs-external/lib-cobertura/jakarta-oro-2.0.8.jar" />
+      	<fileset dir="${test.basedir}/libs-external">
+      		<include name="cobertura-2.1.1.jar" />
+        	<include name="lib-cobertura-2.1.1/**/*.jar" />
+      	</fileset>
   	</path>
 	<!-- load cobertura ant task definition -->
 	<taskdef classpathref="classpath.cobertura" resource="tasks.properties"/>
