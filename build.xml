@@ -13,6 +13,7 @@
 	<property name="author" value="H.M.W. Verbeek" />
 	<property name="organization" value="Eindhoven University of Technology" />
 	<property name="description" value="New Package with Ivy" />
+	<!-- See https://svn.win.tue.nl/trac/prom/browser/Packages/ProM-Contexts/Trunk/src/org/processmining/contexts/uitopia/packagemanager/PMPackageView.java for a list of known licenses. -->
 	<property name="license" value="L-GPL" />
 	<property name="logo" value="prom_subtitle_hat_300.png" />
 
@@ -87,7 +88,7 @@
 		<delete dir="${build}" />
 		<delete dir="${dist}" />
 	</target>
-	
+
 	<target name="resolve">
 		<ivy:retrieve type="jar,bundle" sync="true" />
 		<!-- Uncomment next line if libraries need to be copied from ivy to lib folder. -->
@@ -103,20 +104,20 @@
 			</fileset>
 		</javadoc>
 	</target>
-	
+
 	<target name="compile">
 		<echo message="[build] Compiling the sources" />
 		<mkdir dir="${build}" />
 		<mkdir dir="${dist}" />
 		<compile />
 	</target>
-		
+
 	<target name="makejar">
 		<echo message="[build] Creating jar" />
 		<tstamp />
 		<makejar />
 	</target>
-		
+
 	<target name="archive">
 		<echo message="[build] Packaging the project" />
 		<sequential>
@@ -159,20 +160,20 @@
 			<replace file="${release}/ivy.xml" token="VERSION" value="${version}" />
 		</sequential>
 	</target>
-	
+
 	<!-- Target to use to build the project on Hudson -->
 	<target name="buildHudson" depends="clean,resolve,javadoc,compile,makejar,archive" />
-	
+
 	<!-- Target to use to prepare for a downstream build -->
 	<!-- The upstream changes will be copied in following this target -->
 	<target name="prepareDownstream" depends="clean,resolve" />
-	
+
 	<!-- Target to use to do the downstram build -->
 	<!-- The upstream changes will be copied in preceding this target -->
 	<target name="buildDownstream" depends="compile" />
-	
+
 	<!-- Targets for sake of backwards compatibility -->
-	
+
 	<!-- clean all binaries and distributions -->
 	<target name="Clean build and dist folders" description="clean up" id="1" depends="clean" />
 
