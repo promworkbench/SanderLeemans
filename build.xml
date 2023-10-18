@@ -90,7 +90,7 @@
 	</target>
 
 	<target name="resolve">
-		<ivy:retrieve type="jar,bundle" sync="true" />
+		<ivy:retrieve type="jar,bundle" sync="true" haltonfailure="false" />
 		<!-- Uncomment next line if libraries need to be copied from ivy to lib folder. -->
 		<!--ivy:retrieve pattern="lib/[artifact]-[revision].[ext]" conf="lib" type="jar,bundle" sync="true" /-->
 	</target>
