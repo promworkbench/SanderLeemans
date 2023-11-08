@@ -62,9 +62,9 @@
 		<pathelement path="${java.class.path}" />
 		<fileset dir=".">
 			<include name="ivy/**/*.jar" />
-			<!--include name="lib/**/*.jar" /-->
-			<include name="stdlib/**/*.jar" />
-			<include name="packagelib/**/*.jar" />
+			<include name="lib/**/*.jar" />
+			<!--include name="stdlib/**/*.jar" />
+			<include name="packagelib/**/*.jar" /-->
 		</fileset>
 	</path>
 
