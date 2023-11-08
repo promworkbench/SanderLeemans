@@ -1,7 +1,7 @@
 <ivy-module version="2.0">
     <info organisation="prom" module="NewPackageIvy" revision="latest">
     	<description>
-    		Version 6.14.1
+    		Version 6.14.2
     	</description>
     </info>
     <configurations>
