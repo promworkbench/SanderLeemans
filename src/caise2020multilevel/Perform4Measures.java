@@ -1,0 +1,198 @@
+package caise2020multilevel;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
+import java.util.Set;
+
+import org.deckfour.xes.classification.XEventAndClassifier;
+import org.deckfour.xes.classification.XEventClassifier;
+import org.deckfour.xes.model.XLog;
+import org.processmining.acceptingpetrinet.models.AcceptingPetriNet;
+import org.processmining.acceptingpetrinet.models.impl.AcceptingPetriNetFactory;
+import org.processmining.directlyfollowsmodelminer.mining.plugins.DfmImportPlugin;
+import org.processmining.directlyfollowsmodelminer.model.DirectlyFollowsModel;
+import org.processmining.directlyfollowsmodelminer.model.DirectlyFollowsModel2AcceptingPetriNet;
+import org.processmining.framework.packages.PackageManager.Canceller;
+import org.processmining.framework.plugin.PluginContext;
+import org.processmining.models.graphbased.directed.bpmn.BPMNDiagram;
+import org.processmining.models.graphbased.directed.petrinet.Petrinet;
+import org.processmining.models.graphbased.directed.petrinet.elements.Place;
+import org.processmining.models.graphbased.directed.petrinet.elements.Transition;
+import org.processmining.models.semantics.petrinet.Marking;
+import org.processmining.multilevelminer.multilevelmodel.MultiLevelModel;
+import org.processmining.multilevelminer.plugins.MultiLevelModelImportPlugin;
+import org.processmining.plugins.InductiveMiner.efficienttree.EfficientTree;
+import org.processmining.plugins.InductiveMiner.efficienttree.EfficientTree2AcceptingPetriNet;
+import org.processmining.plugins.InductiveMiner.plugins.EfficientTreeImportPlugin;
+import org.processmining.plugins.InductiveMiner.reduceacceptingpetrinet.ReduceAcceptingPetriNetKeepLanguage;
+import org.processmining.plugins.bpmn.Bpmn;
+import org.processmining.plugins.bpmn.plugins.BpmnSelectDiagramPlugin;
+import org.processmining.xeslite.plugin.OpenLogFileLiteImplPlugin;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
+import com.raffaeleconforti.conversion.bpmn.BPMNToPetriNetConverter;
+
+import coopis2018.BPMN;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.set.hash.THashSet;
+import thesis.helperClasses.FakeContext;
+
+public class Perform4Measures {
+	public static void main(String... args) throws Exception {
+		ExperimentParameters parameters = new ExperimentParameters();
+		PluginContext context = new FakeContext();
+		parameters.getMeasuresDirectory().mkdirs();
+
+		File[] files = parameters.getLogDirectory().listFiles();
+
+		for (File logFile : files) {
+			for (Algorithm algorithm : parameters.getAlgorithms()) {
+				for (int runNr : parameters.getRuns()) {
+					for (int foldNr : parameters.getFolds()) {
+
+						Call call = new Call(parameters, algorithm, logFile, runNr, foldNr);
+
+						if (call.getFlattenedModelFile().exists()) {
+							for (Measure measure : parameters.getMeasures()) {
+
+								if (!call.isMeasureDone(measure)) {
+									if (!isError(call.getFlattenedModelFile())) {
+										//we can perform a measure
+
+										System.out.println(call + ", " + measure.getTitle());
+
+										XLog log = (XLog) new OpenLogFileLiteImplPlugin().importFile(context,
+												call.getSplitLogMeasureFile());
+
+										XEventClassifier combinedClassifier = new XEventAndClassifier(
+												parameters.getClassifiers(logFile));
+
+										double[] results;
+										if (measure.isSupportsMultiLevelModels()
+												&& algorithm.getFileExtension() == ".mlm") {
+											//measure as multi-level model
+											MultiLevelModel mlm = MultiLevelModelImportPlugin.importFromStream(context,
+													new FileInputStream(call.getModelFile()));
+											results = measure.compute(log, mlm);
+										} else if (measure.isSupportsTrees()
+												&& algorithm.getFlattenedFileExtension() == ".tree") {
+											//measure as tree
+											EfficientTree tree = EfficientTreeImportPlugin
+													.importFromFile(call.getFlattenedModelFile());
+											results = measure.compute(log, combinedClassifier, tree);
+										} else if (measure.isSupportsBPMN()
+												&& algorithm.getFlattenedFileExtension() == ".bpmn") {
+											//measure as BPMN
+											Bpmn model = BPMN.importFile(call.getFlattenedModelFile());
+											BPMNDiagram diagram = new BpmnSelectDiagramPlugin()
+													.selectDefault(new FakeContext(), model);
+											results = measure.compute(log, combinedClassifier, diagram);
+										} else {
+											//measure as accepting Petri net
+											AcceptingPetriNet aNet = readModel(call);
+
+											results = measure.compute(log, combinedClassifier, aNet);
+										}
+
+										//write the results to a file
+										PrintWriter writer = new PrintWriter(call.getMeasureFile(measure));
+										for (int i = 0; i < measure.getNumberOfMeasures(); i++) {
+											writer.println(results[i] + " " + measure.getMeasureNames()[i]);
+										}
+										writer.close();
+
+									} else {
+										//the discovery had an error; write the measure file as having an error.
+										System.out.println(call + " === error");
+										PrintWriter p = new PrintWriter(call.getMeasureFile(measure));
+										p.write("error");
+										p.close();
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public static boolean isError(File file) throws IOException {
+		BufferedReader r = new BufferedReader(new FileReader(file));
+		String firstLine = r.readLine();
+		r.close();
+		return firstLine.startsWith("error");
+	}
+
+	@SuppressWarnings("deprecation")
+	public static AcceptingPetriNet readModel(Call call) throws FileNotFoundException, Exception {
+		if (call.getAlgorithm().getFlattenedFileExtension() == ".tree") {
+			EfficientTree tree = EfficientTreeImportPlugin.importFromFile(call.getFlattenedModelFile());
+
+			String[] a = tree.getInt2activity();
+			for (int i = 0; i < a.length; i++) {
+				if (a[i].toLowerCase().endsWith("+complete")) {
+					a[i] = a[i].substring(0, a[i].lastIndexOf("+"));
+				}
+			}
+
+			AcceptingPetriNet aNet = EfficientTree2AcceptingPetriNet.convert(tree);
+
+			Canceller canceller = new Canceller() {
+				public boolean isCancelled() {
+					return false;
+				}
+			};
+			ReduceAcceptingPetriNetKeepLanguage.reduce(aNet, canceller);
+			return aNet;
+		} else if (call.getAlgorithm().getFlattenedFileExtension() == ".bpmn") {
+			Bpmn model = BPMN.importFile(call.getFlattenedModelFile());
+			BPMNDiagram diagram = new BpmnSelectDiagramPlugin().selectDefault(new FakeContext(), model);
+			Object[] r = BPMNToPetriNetConverter.convert(diagram);
+			AcceptingPetriNet aNet = AcceptingPetriNetFactory.createAcceptingPetriNet((Petrinet) r[0], (Marking) r[1],
+					(Marking) r[2]);
+
+			//these algorithms give a final marking; fix it just to be sure
+			fixFinalMarking(aNet);
+			return aNet;
+		} else if (call.getAlgorithm().getFlattenedFileExtension() == ".dfm") {
+			DirectlyFollowsModel dfm = DfmImportPlugin.readFile(new FileInputStream(call.getFlattenedModelFile()));
+			TIntObjectMap<List<Transition>> map1 = new TIntObjectHashMap<>(10, 0.5f, -1);
+			return DirectlyFollowsModel2AcceptingPetriNet.convert(dfm, map1);
+		} else if (call.getAlgorithm().getFlattenedFileExtension() == ".apnml") {
+			AcceptingPetriNet net = AcceptingPetriNetFactory.createAcceptingPetriNet();
+			net.importFromStream(new FakeContext(), new FileInputStream(call.getFlattenedModelFile()));
+			return net;
+		}
+		assert (false);
+		return null;
+	}
+
+	public static void fixFinalMarking(final AcceptingPetriNet net) {
+		Set<Marking> newMarkings = new THashSet<>();
+
+		Marking newMarking = new Marking(FluentIterable.from(net.getNet().getPlaces()).filter(new Predicate<Place>() {
+			public boolean apply(Place place) {
+				return net.getNet().getOutEdges(place).isEmpty();
+			}
+		}).toSet());
+		newMarkings.add(newMarking);
+		net.getFinalMarkings().add(newMarking);
+	}
+
+	public static void deleteMeasures(Call call, ExperimentParameters parameters) {
+		for (Measure measure : parameters.getAllMeasures()) {
+			if (call.getMeasureFile(measure).exists()) {
+				call.getMeasureFile(measure).delete();
+			}
+		}
+	}
+}
